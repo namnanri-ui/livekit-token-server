@@ -24,23 +24,20 @@ async def health():
 
 @app.get("/token")
 async def get_token(room: str, identity: str):
-    token = api.AccessToken(
-        api_key=LIVEKIT_API_KEY,
-        api_secret=LIVEKIT_API_SECRET,
-    )
-    token.identity = identity
-    token.ttl = 3600
-    token.add_grants(
-        api.VideoGrants(
-            room=room,
+    # ✅ Following official docs pattern
+    token = api.AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET) \
+        .with_identity(identity) \
+        .with_name(identity) \
+        .with_grants(api.VideoGrants(
             room_join=True,
+            room=room,
             can_publish=True,
             can_subscribe=True,
             can_publish_data=True,
-        )
-    )
+        )).to_jwt()
+    
     return {
-        "token": token.to_jwt(),
+        "token": token,
         "url": LIVEKIT_URL,
         "room": room,
         "identity": identity,
