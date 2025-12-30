@@ -23,7 +23,7 @@ lkapi = api.LiveKitAPI(
     api_secret=LIVEKIT_API_SECRET,
 )
 
-
+@app.head("/")
 @app.get("/")
 async def health():
     return {"status": "ok", "service": "livekit-token-server"}
