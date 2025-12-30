@@ -16,6 +16,13 @@ LIVEKIT_URL = os.environ["LIVEKIT_URL"]
 LIVEKIT_API_KEY = os.environ["LIVEKIT_API_KEY"]
 LIVEKIT_API_SECRET = os.environ["LIVEKIT_API_SECRET"]
 
+# ✅ LiveKit API 클라이언트
+lkapi = api.LiveKitAPI(
+    url=LIVEKIT_URL,
+    api_key=LIVEKIT_API_KEY,
+    api_secret=LIVEKIT_API_SECRET,
+)
+
 
 @app.get("/")
 async def health():
@@ -24,7 +31,18 @@ async def health():
 
 @app.get("/token")
 async def get_token(room: str, identity: str):
-    # ✅ Following official docs pattern
+    # ✅ Room 생성 with 짧은 empty_timeout (안전장치)
+    try:
+        await lkapi.room.create_room(
+            api.CreateRoomRequest(
+                name=room,
+                empty_timeout=60,  # ✅ 1분 후 빈 Room 자동 삭제
+            )
+        )
+    except Exception:
+        pass  # 이미 존재하면 무시
+    
+    # 토큰 생성
     token = api.AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET) \
         .with_identity(identity) \
         .with_name(identity) \
@@ -42,6 +60,16 @@ async def get_token(room: str, identity: str):
         "room": room,
         "identity": identity,
     }
+
+
+# ✅ Room 삭제 API (선택사항 - Swift에서 직접 호출 가능)
+@app.delete("/room/{room_name}")
+async def delete_room(room_name: str):
+    try:
+        await lkapi.room.delete_room(api.DeleteRoomRequest(room=room_name))
+        return {"status": "deleted", "room": room_name}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
 
 
 if __name__ == "__main__":
