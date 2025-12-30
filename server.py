@@ -31,16 +31,6 @@ async def health():
 
 @app.get("/token")
 async def get_token(room: str, identity: str):
-    # ✅ Room 생성 with 짧은 empty_timeout (안전장치)
-    try:
-        await lkapi.room.create_room(
-            api.CreateRoomRequest(
-                name=room,
-                empty_timeout=60,  # ✅ 1분 후 빈 Room 자동 삭제
-            )
-        )
-    except Exception:
-        pass  # 이미 존재하면 무시
     
     # 토큰 생성
     token = api.AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET) \
